@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "leptjson.h"
 
 static int main_ret = 0;
@@ -22,43 +20,101 @@ static int test_pass = 0;
 
 static void test_parse_null() {
     lept_value v;
-    v.type = LEPT_FALSE;
     EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "null"));
     EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "\n\r\t   null"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "null  \t\r\n"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "\n\r\t   null  \t\r\n"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+}
+
+static void test_parse_true() {
+    lept_value v;
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "true"));
+    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "\n\r\t   true"));
+    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "true  \t\r\n"));
+    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "\n\r\t   true  \t\r\n"));
+    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
+}
+
+static void test_parse_false() {
+    lept_value v;
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "false"));
+    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "\n\r\t   false"));
+    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "false  \t\r\n"));
+    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "\n\r\t   false  \t\r\n"));
+    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
 }
 
 static void test_parse_expect_value() {
     lept_value v;
-
-    v.type = LEPT_FALSE;
     EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, ""));
     EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
 
-    v.type = LEPT_FALSE;
     EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, " "));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, "\t"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, "\r"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_EXPECT_VALUE, lept_parse(&v, "\n"));
     EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
 }
 
 static void test_parse_invalid_value() {
     lept_value v;
-    v.type = LEPT_FALSE;
     EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "nul"));
     EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
 
-    v.type = LEPT_FALSE;
+    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "nullll"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "tru"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "falseeee"));
+    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
     EXPECT_EQ_INT(LEPT_PARSE_INVALID_VALUE, lept_parse(&v, "?"));
     EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
 }
 
 static void test_parse_root_not_singular() {
     lept_value v;
-    v.type = LEPT_FALSE;
     EXPECT_EQ_INT(LEPT_PARSE_ROOT_NOT_SINGULAR, lept_parse(&v, "null x"));
     EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_ROOT_NOT_SINGULAR, lept_parse(&v, "true x"));
+    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
+
+    EXPECT_EQ_INT(LEPT_PARSE_ROOT_NOT_SINGULAR, lept_parse(&v, "false x"));
+    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
 }
 
 static void test_parse() {
     test_parse_null();
+    test_parse_true();
+    test_parse_false();
     test_parse_expect_value();
     test_parse_invalid_value();
     test_parse_root_not_singular();
