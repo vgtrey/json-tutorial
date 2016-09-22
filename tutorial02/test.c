@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "leptjson.h"
 
 static int main_ret = 0;
@@ -21,25 +19,20 @@ static int test_pass = 0;
 #define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
 #define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
 
-static void test_parse_null() {
-    lept_value v;
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "null"));
-    EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));
-}
+#define TEST_LITERAL(expect, json)\
+    do {\
+        lept_value v;\
+        EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, json));\
+        EXPECT_EQ_INT(expect, lept_get_type(&v));\
+    } while(0)
 
-static void test_parse_true() {
-    lept_value v;
-    v.type = LEPT_FALSE;
-    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "true"));
-    EXPECT_EQ_INT(LEPT_TRUE, lept_get_type(&v));
-}
-
-static void test_parse_false() {
-    lept_value v;
-    v.type = LEPT_TRUE;
-    EXPECT_EQ_INT(LEPT_PARSE_OK, lept_parse(&v, "false"));
-    EXPECT_EQ_INT(LEPT_FALSE, lept_get_type(&v));
+static void test_parse_literal() {
+    TEST_LITERAL(LEPT_NULL, "null");
+    TEST_LITERAL(LEPT_NULL, " \t\r\nnull");
+    TEST_LITERAL(LEPT_TRUE, "true");
+    TEST_LITERAL(LEPT_TRUE, "true \t\r\n");
+    TEST_LITERAL(LEPT_FALSE, "false");
+    TEST_LITERAL(LEPT_FALSE, " \t\r\nfalse \t\r\n");
 }
 
 #define TEST_NUMBER(expect, json)\
@@ -75,7 +68,6 @@ static void test_parse_number() {
 #define TEST_ERROR(error, json)\
     do {\
         lept_value v;\
-        v.type = LEPT_FALSE;\
         EXPECT_EQ_INT(error, lept_parse(&v, json));\
         EXPECT_EQ_INT(LEPT_NULL, lept_get_type(&v));\
     } while(0)
@@ -83,13 +75,15 @@ static void test_parse_number() {
 static void test_parse_expect_value() {
     TEST_ERROR(LEPT_PARSE_EXPECT_VALUE, "");
     TEST_ERROR(LEPT_PARSE_EXPECT_VALUE, " ");
+    TEST_ERROR(LEPT_PARSE_EXPECT_VALUE, " \t\r\n");
 }
 
 static void test_parse_invalid_value() {
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "nul");
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "?");
+    TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "nullx");
 
-#if 0
+#if 1
     /* invalid number */
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "+0");
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "+1");
@@ -99,17 +93,17 @@ static void test_parse_invalid_value() {
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "inf");
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "NAN");
     TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "nan");
+    TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "0123"); /* after zero should be '.' or nothing */
+    TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "0x0");
+    TEST_ERROR(LEPT_PARSE_INVALID_VALUE, "0x123");
 #endif
 }
 
 static void test_parse_root_not_singular() {
     TEST_ERROR(LEPT_PARSE_ROOT_NOT_SINGULAR, "null x");
 
-#if 0
-    /* invalid number */
-    TEST_ERROR(LEPT_PARSE_ROOT_NOT_SINGULAR, "0123"); /* after zero should be '.' or nothing */
-    TEST_ERROR(LEPT_PARSE_ROOT_NOT_SINGULAR, "0x0");
-    TEST_ERROR(LEPT_PARSE_ROOT_NOT_SINGULAR, "0x123");
+#if 1
+    TEST_ERROR(LEPT_PARSE_ROOT_NOT_SINGULAR, "1 23");
 #endif
 }
 
@@ -121,9 +115,7 @@ static void test_parse_number_too_big() {
 }
 
 static void test_parse() {
-    test_parse_null();
-    test_parse_true();
-    test_parse_false();
+    test_parse_literal();
     test_parse_number();
     test_parse_expect_value();
     test_parse_invalid_value();
