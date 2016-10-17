@@ -13,7 +13,6 @@
 #define ISDIGIT(ch)         ((ch) >= '0' && (ch) <= '9')
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
 #define PUTC(c, ch)         do { *(char*)lept_context_push(c, sizeof(char)) = (ch); } while(0)
-#define ISINVALID(ch)       ((ch) < '\x20' || (ch) == '\x22' || (ch) == '\x5C')
 
 typedef struct {
     const char* json;
@@ -121,12 +120,16 @@ static int lept_parse_string(lept_context* c, lept_value* v) {
                     case 't':
                         PUTC(c, '\t'); break;
                     default:
+                        c->top = head;
                         return LEPT_PARSE_INVALID_STRING_ESCAPE;
                 }
                 break;
             default:
-                if (!ISINVALID(ch)) PUTC(c, ch);
-                else return LEPT_PARSE_INVALID_STRING_CHAR;
+                if ((unsigned) ch < 0x20) {
+                    c->top = head;
+                    return LEPT_PARSE_INVALID_STRING_CHAR;
+                }
+                PUTC(c, ch);
         }
     }
 }
